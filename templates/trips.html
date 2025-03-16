@@ -1,0 +1,202 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .custom-table {
+    min-width: 1800px;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .custom-table th,
+  .custom-table td {
+    white-space: nowrap;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+  }
+  /* Sticky header */
+  .custom-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 10;
+  }
+  /* Sticky first column (Trip ID) */
+  .custom-table th:first-child,
+  .custom-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: #f8f9fa;
+    z-index: 11;
+  }
+</style>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light" style="width: 100%;">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('analytics') }}">My Dashboard</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('analytics') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active" href="{{ url_for('trips') }}">Trips</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('trip_insights') }}">Trip Insights</a></li>
+      </ul>
+      <form class="d-flex" method="GET" action="{{ url_for('trips') }}">
+        <input type="text" name="trip_id" placeholder="Trip ID" class="form-control me-2" value="{{ trip_id_search }}" />
+        <select name="route_quality" class="form-select me-2">
+          <option value="">-- Route Quality --</option>
+          <option value="Low" {% if route_quality_filter == "Low" %}selected{% endif %}>Low</option>
+          <option value="Moderate" {% if route_quality_filter == "Moderate" %}selected{% endif %}>Moderate</option>
+          <option value="High" {% if route_quality_filter == "High" %}selected{% endif %}>High</option>
+        </select>
+        <input type="text" name="model" placeholder="Model" class="form-control me-2" value="{{ model_filter }}" />
+        <input type="text" name="ram" placeholder="RAM" class="form-control me-2" value="{{ ram_filter }}" />
+        <input type="text" name="carrier" placeholder="Carrier" class="form-control me-2" />
+        <input type="text" name="variance_min" placeholder="Variance Min (%)" class="form-control me-2" value="{{ variance_min }}" />
+        <input type="text" name="variance_max" placeholder="Variance Max (%)" class="form-control me-2" value="{{ variance_max }}" />
+        <select name="driver" class="form-select me-2">
+          <option value="">-- Select Driver --</option>
+          {% for d in drivers %}
+          <option value="{{ d }}" {% if d == driver_filter %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+        <!-- For Export, allow user to specify a filter name -->
+        <input type="text" name="export_name" placeholder="Export Filter Name" class="form-control me-2" />
+        <button class="btn btn-outline-success me-2" type="submit">Filter</button>
+        <!-- Export button: it submits to the export route with same filters -->
+        <a class="btn btn-outline-primary" href="{{ url_for('export_trips', trip_id=trip_id_search, route_quality=route_quality_filter, model=model_filter, ram=ram_filter, variance_min=variance_min, variance_max=variance_max, driver=driver_filter, export_name=request.args.get('export_name','exported_trips')) }}">Export XLSX</a>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="mb-3" style="margin: 1rem;">
+  <form method="POST" action="{{ url_for('update_db') }}">
+    <button type="submit" class="btn btn-warning">Update Database</button>
+  </form>
+</div>
+
+<h1 style="margin: 1rem 0 1rem 1rem;">Trips Table</h1>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" style="margin: 1rem;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<!-- Pagination Info -->
+<div style="margin: 1rem;">
+  <p>Showing page {{ page }} of {{ total_pages }} ({{ total_rows }} total rows)</p>
+  <div>
+    {% if page > 1 %}
+      <a class="btn btn-secondary btn-sm" href="?page={{ page-1 }}&trip_id={{ trip_id_search }}&route_quality={{ route_quality_filter }}&model={{ model_filter }}&ram={{ ram_filter }}&variance_min={{ variance_min }}&variance_max={{ variance_max }}&driver={{ driver_filter }}">Previous</a>
+    {% endif %}
+    {% if page < total_pages %}
+      <a class="btn btn-secondary btn-sm" href="?page={{ page+1 }}&trip_id={{ trip_id_search }}&route_quality={{ route_quality_filter }}&model={{ model_filter }}&ram={{ ram_filter }}&variance_min={{ variance_min }}&variance_max={{ variance_max }}&driver={{ driver_filter }}">Next</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="table-container">
+  <table class="custom-table">
+    <thead>
+      <tr>
+        <th>Driver</th>
+        <th>Carrier</th>
+        <th>Android Ver</th>
+        <th>Model</th>
+        <th>Device Name</th>
+        <th>Chipset</th>
+        <th>RAM</th>
+        <th>Storage</th>
+        <th>Background Tendency</th>
+        <th>Manufacturer</th>
+        <th>Manual Dist</th>
+        <th>Calc Dist</th>
+        <th>% Calc/Manual</th>
+        <th>Variance (%)</th>
+        <th>Trip ID</th>
+        <th>Route Quality</th>
+        <th>View Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for trip in trips %}
+      <tr>
+        
+        <td>{{ trip.UserName }}</td>
+        <td>{{ trip.carrier }}</td>
+        <td>{{ trip["Android Version"] }}</td>
+        <td>{{ trip.model }}</td>
+        <td>{{ trip["Device Name"] }}</td>
+        <td>{{ trip.Chipset }}</td>
+        <td>{{ trip.RAM }}</td>
+        <td>{{ trip.Storage }}</td>
+        <td>{{ trip["Background Task Killing Tendency"] }}</td>
+        <td>{{ trip.manufacturer }}</td>
+        <td>{{ trip.manual_distance }}</td>
+        <td>{{ trip.calculated_distance }}</td>
+        <td>{{ trip.distance_percentage }}</td>
+        <td>
+          {% if trip.variance is not none %}
+            {{ trip.variance|round(2) }}%
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+        <td>
+            <a href="https://backoffice.illa.blue/database/trips/{{ trip.tripId }}" target="_blank">{{ trip.tripId }}</a>
+          </td>
+        <td>
+          <select class="form-select route-quality-select" data-trip-id="{{ trip.tripId }}">
+            <option value="">-- Select --</option>
+            <option value="Low" {% if trip.route_quality == "Low" %}selected{% endif %}>Low</option>
+            <option value="Moderate" {% if trip.route_quality == "Moderate" %}selected{% endif %}>Moderate</option>
+            <option value="High" {% if trip.route_quality == "High" %}selected{% endif %}>High</option>
+          </select>
+        </td>
+        <td>
+          <a class="btn btn-secondary btn-sm" href="{{ url_for('trip_detail', trip_id=trip.tripId) }}">View</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+document.querySelectorAll('.route-quality-select').forEach(function(selectElem) {
+  selectElem.addEventListener('change', function() {
+    const tripId = this.getAttribute('data-trip-id');
+    const selectedQuality = this.value;
+    if (!selectedQuality) {
+      return;
+    }
+    fetch('/update_route_quality', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trip_id: tripId, route_quality: selectedQuality })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        console.log('Route quality updated for trip ' + tripId);
+      } else {
+        alert('Error: ' + data.message);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while updating route quality.');
+    });
+  });
+});
+</script>
+{% endblock %}

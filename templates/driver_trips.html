@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Driver Trips</title>
+</head>
+<body>
+    <h1>Driver Trips</h1>
+    <form method="get" action="/driver">
+        <label for="name">Driver Name:</label>
+        <input type="text" name="name" id="name" value="{{ driver_name }}">
+        <input type="submit" value="Filter">
+    </form>
+    
+    <table border="1" cellspacing="0" cellpadding="5">
+        <thead>
+            <tr>
+                <th>Trip ID</th>
+                <th>Time</th>
+                <th>User Name</th>
+                <th>Carrier</th>
+                <th>Model</th>
+                <th>OS Version</th>
+                <th>Trip View</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for trip in trips %}
+            <tr>
+                <td>{{ trip.tripId }}</td>
+                <td>{{ trip.time }}</td>
+                <td>{{ trip.UserName }}</td>
+                <td>{{ trip.carrier }}</td>
+                <td>{{ trip.model }}</td>
+                <td>{{ trip.os_version }}</td>
+                <td><a href="/trip/{{ trip.tripId }}">View Trip</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <p><a href="/">Back to Dashboard</a></p>
+</body>
+</html>

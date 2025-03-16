@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('analytics') }}">My Dashboard</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('analytics') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('trips') }}">Trips</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<h1 class="mt-4">Trip Detail - ID: {{ db_trip.trip_id if db_trip else "N/A" }}</h1>
+
+<div class="row">
+  <div class="col-md-6">
+    <h3>Trip Info (From API/DB)</h3>
+    <ul>
+      <li>Status: {{ db_trip.status if db_trip else trip_attributes.get("status") }}</li>
+      <li>Manual Distance: {{ db_trip.manual_distance }}</li>
+      <li>Calculated Distance: {{ db_trip.calculated_distance }}</li>
+      <li>% of Calc/Manual: {{ distance_percentage }}</li>
+      <li>Distance Verification: {{ distance_verification }}</li>
+      <li>Insight: {{ trip_insight }}</li>
+      {% if db_trip.supply_partner %}
+      <li><strong>Supply Partner Trip</strong></li>
+      {% endif %}
+    </ul>
+    <h3>Update Route Quality</h3>
+    <select id="routeQualitySelect" class="form-select">
+      <option value="">-- Select Quality --</option>
+      <option value="Low" {% if db_trip and db_trip.route_quality == "Low" %}selected{% endif %}>Low</option>
+      <option value="Moderate" {% if db_trip and db_trip.route_quality == "Moderate" %}selected{% endif %}>Moderate</option>
+      <option value="High" {% if db_trip and db_trip.route_quality == "High" %}selected{% endif %}>High</option>
+    </select>
+    <button class="btn btn-primary mt-2 update-quality-btn" data-trip-id="{{ db_trip.trip_id if db_trip else 0 }}">Update</button>
+  </div>
+  <div class="col-md-6">
+    <h3>Excel Trip Details</h3>
+    {% if excel_trip_data %}
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, value in excel_trip_data.items() %}
+          <tr>
+            <td>{{ key }}</td>
+            <td>{{ value }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No Excel data found for this trip.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.update-quality-btn').forEach(function(button) {
+  button.addEventListener('click', function() {
+    const tripId = this.getAttribute('data-trip-id');
+    const selectElem = document.getElementById("routeQualitySelect");
+    const selectedQuality = selectElem.value;
+    if (!selectedQuality) {
+      alert("Please select a route quality value.");
+      return;
+    }
+    fetch("/update_route_quality", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ trip_id: tripId, route_quality: selectedQuality })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "success") {
+        alert("Route quality updated successfully!");
+      } else {
+        alert("Error: " + data.message);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("An error occurred while updating route quality.");
+    });
+  });
+});
+</script>
+{% endblock %}

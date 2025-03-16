@@ -1,0 +1,39 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+  }
+  
+  h1, h3 {
+    color: #333;
+  }
+  
+  .navbar-brand {
+    font-weight: bold;
+    color: #007bff !important;
+  }
+  
+  .table-responsive {
+    margin-top: 20px;
+  }
+  
+  table {
+    font-size: 0.9rem;
+  }
+  
+  /* Make the table horizontally scrollable */
+.table-container {
+    width: 100%;
+    overflow-x: auto; /* Enable horizontal scrolling */
+  }
+  
+  /* Prevent text wrapping in cells */
+  .custom-table td,
+  .custom-table th {
+    white-space: nowrap;
+  }
+  
+  /* Optionally set a minimum width to force horizontal scrolling more obviously */
+  .custom-table {
+    min-width: 1500px; /* adjust as needed */
+  }
+  

@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Mobile Specs Analysis</h1>
+<table id="mobileSpecsTable" class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Average Route Quality</th>
+      <th>Trip Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for spec in specs_data %}
+    <tr>
+      <td>{{ spec.model }}</td>
+      <td>{{ spec.avg_route_quality | round(2) if spec.avg_route_quality is not none else "N/A" }}</td>
+      <td>{{ spec.trip_count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#mobileSpecsTable').DataTable({
+        "order": [[ 1, "desc" ]]
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{{ url_for('analytics') }}">My Dashboard</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('analytics') }}">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('trips') }}">Trips</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<h1 class="mt-4">Trip Insights</h1>
+<div class="row">
+  <div class="col-md-6">
+    <h3>Route Quality Counts</h3>
+    <ul>
+      <li>Low: {{ quality_counts["Low"] }}</li>
+      <li>Moderate: {{ quality_counts["Moderate"] }}</li>
+      <li>High: {{ quality_counts["High"] }}</li>
+      <li>No Quality Set: {{ quality_counts[""] }}</li>
+    </ul>
+  </div>
+  <div class="col-md-6">
+    <h3>Distance Averages</h3>
+    <ul>
+      <li>Average Manual Distance: {{ avg_manual|round(2) }}</li>
+      <li>Average Calculated Distance: {{ avg_calculated|round(2) }}</li>
+    </ul>
+  </div>
+</div>
+<div class="row mt-4">
+  <div class="col-md-6">
+    <h3>Distance Consistency</h3>
+    <ul>
+      <li>Consistent Trips: {{ consistent }}</li>
+      <li>Inconsistent Trips: {{ inconsistent }}</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

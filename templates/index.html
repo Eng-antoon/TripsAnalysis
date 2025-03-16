@@ -1,0 +1,177 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">My Dashboard</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Dashboard</a>
+        </li>
+        <!-- Additional navigation links can be added here -->
+      </ul>
+      <form class="d-flex" method="GET" action="/">
+        <select name="driver" class="form-select me-2">
+          <option value="">-- Select Driver --</option>
+          {% for driver in drivers %}
+            <option value="{{ driver }}" {% if driver == driver_filter %}selected{% endif %}>{{ driver }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline-success" type="submit">Filter</button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<h1 class="mt-4">Dashboard</h1>
+{% if driver_filter %}
+  <h4>Showing trips for driver: {{ driver_filter }}</h4>
+{% endif %}
+
+<div class="row">
+  <!-- Carrier Distribution Chart -->
+  <div class="col-md-6">
+    <h3>Carrier Distribution</h3>
+    <canvas id="carrierChart"></canvas>
+  </div>
+
+  <!-- OS Usage Chart -->
+  <div class="col-md-6">
+    <h3>OS Usage</h3>
+    <canvas id="osChart"></canvas>
+  </div>
+</div>
+
+<hr />
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <h3>Manufacturer Distribution</h3>
+    <canvas id="manufacturerChart"></canvas>
+  </div>
+  <div class="col-md-6">
+    <h3>Device Usage</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Count</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in device_usage %}
+          <tr>
+            <td>{{ d.model }}</td>
+            <td>{{ d.count }}</td>
+            <td>{{ d.percentage }}%</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr />
+
+<div class="row mt-4">
+  <div class="col-12">
+    <h3>Trip List</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Trip ID</th>
+          <th>Driver</th>
+          <th>Carrier</th>
+          <th>Android Version</th>
+          <th>Model</th>
+          <th>Manufacturer</th>
+          <th>View Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for trip in trips %}
+          <tr>
+            <td>{{ trip.tripId }}</td>
+            <td>{{ trip.UserName }}</td>
+            <td>{{ trip.carrier }}</td>
+            <td>{{ trip["Android Version"] }}</td>
+            <td>{{ trip.model }}</td>
+            <td>{{ trip.manufacturer }}</td>
+            <td>
+              <a class="btn btn-primary btn-sm" href="{{ url_for('trip_detail', trip_id=trip.tripId) }}">View</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // Prepare data for Chart.js using the context variables passed from Flask
+  const carrierCounts = JSON.parse('{{ carrier_counts|tojson|safe }}');
+  const osCounts = JSON.parse('{{ os_counts|tojson|safe }}');
+  const manufacturerCounts = JSON.parse('{{ manufacturer_counts|tojson|safe }}');
+
+  const carrierLabels = Object.keys(carrierCounts);
+  const carrierValues = Object.values(carrierCounts);
+
+  const osLabels = Object.keys(osCounts);
+  const osValues = Object.values(osCounts);
+
+  const manufacturerLabels = Object.keys(manufacturerCounts);
+  const manufacturerValues = Object.values(manufacturerCounts);
+
+  // Carrier Distribution Pie Chart
+  const ctxCarrier = document.getElementById('carrierChart').getContext('2d');
+  new Chart(ctxCarrier, {
+    type: 'pie',
+    data: {
+      labels: carrierLabels,
+      datasets: [{
+        data: carrierValues,
+        backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56']
+      }]
+    }
+  });
+
+  // OS Usage Bar Chart
+  const ctxOs = document.getElementById('osChart').getContext('2d');
+  new Chart(ctxOs, {
+    type: 'bar',
+    data: {
+      labels: osLabels,
+      datasets: [{
+        label: 'OS Versions',
+        data: osValues,
+        backgroundColor: 'rgba(75, 192, 192, 0.6)'
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // Manufacturer Distribution Doughnut Chart
+  const ctxManufacturer = document.getElementById('manufacturerChart').getContext('2d');
+  new Chart(ctxManufacturer, {
+    type: 'doughnut',
+    data: {
+      labels: manufacturerLabels,
+      datasets: [{
+        data: manufacturerValues,
+        backgroundColor: ['#42a5f5', '#66bb6a', '#ffa726', '#ab47bc', '#ec407a']
+      }]
+    }
+  });
+</script>
+
+{% endblock %}
